@@ -75,7 +75,17 @@
 
                         <div class="p-3 mb-3 bg-light rounded border shadow-sm">
                             <h6 class="fw-bold mb-3">Map Drawing</h6>
-                            <p class="text-muted small mb-0">Use the toolbar on the left side of the map to draw markers, polygons, and lines. Then click "Save Drawn Shapes" below to persist them as a new layer.</p>
+                            <p class="text-muted small mb-3">Use the map toolbar to draw elements. You can save them as a new layer below, or update an existing layer.</p>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small mb-1">Active Edit Layer</label>
+                                <select class="form-select form-select-sm" id="activeEditLayer">
+                                    <option value="">-- None Selected --</option>
+                                </select>
+                            </div>
+                            <button id="updateActiveLayerBtn" class="btn btn-warning btn-sm w-100 fw-bold">
+                                <i class="bi bi-pencil-square"></i> Update Active Layer
+                            </button>
                         </div>
 
                         <div class="p-3 mb-3 bg-light rounded border shadow-sm">

@@ -64,6 +64,19 @@ def create_layer(layer: LayerCreate, db: Session = Depends(get_db)):
     db.refresh(db_layer)
     return db_layer
 
+@app.put("/layers/{layer_id}")
+def update_layer(layer_id: int, layer: LayerCreate, db: Session = Depends(get_db)):
+    db_layer = db.query(Layer).filter(Layer.id == layer_id).first()
+    if not db_layer:
+        raise HTTPException(status_code=404, detail="Layer not found")
+
+    db_layer.name = layer.name
+    db_layer.category_id = layer.category_id
+    db_layer.geojson_data = layer.geojson_data
+    db.commit()
+    db.refresh(db_layer)
+    return db_layer
+
 @app.post("/upload_kmz/")
 def upload_kmz(
     name: str = Form(...),

@@ -10,10 +10,20 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // Add Geoman controls for professional drawing/editing
 map.pm.addControls({
     position: 'topleft',
-    drawCircle: false,
+    drawMarker: true,
+    drawPolygon: true,
+    drawLine: true,
+    drawCircle: true,
+    drawRectangle: true,
+    drawText: true,
+    editMode: true,
+    dragMode: true,
+    cutPolygon: true,
+    removalMode: true
 });
 
 let loadedLayers = {}; // Store layer instances for toggling visibility
+let rawLayersData = {}; // Store raw data to identify layers
 
 // Helper for XSS sanitization
 function sanitizeHTML(str) {
@@ -66,7 +76,11 @@ async function loadTreeView() {
         });
     });
 
+    const activeEditLayerSelect = document.getElementById('activeEditLayer');
+    activeEditLayerSelect.innerHTML = '<option value="">-- None Selected --</option>';
+
     layers.forEach(layer => {
+        rawLayersData[layer.id] = layer;
         const nodeId = `layer_${layer.id}`;
         treeData.push({
             id: nodeId,
@@ -76,6 +90,14 @@ async function loadTreeView() {
             state: { selected: true }, // Default checked
             data: layer
         });
+
+        // Populate edit dropdown for non-KMZ layers
+        if (!layer.is_kmz) {
+            const opt = document.createElement('option');
+            opt.value = layer.id;
+            opt.textContent = layer.name;
+            activeEditLayerSelect.appendChild(opt);
+        }
 
         // Auto-load layers if not already loaded
         if (!loadedLayers[nodeId]) {
@@ -87,6 +109,12 @@ async function loadTreeView() {
                     const tree = $('#jstree_div').jstree(true);
                     if (tree && tree.is_selected(nodeId)) {
                         e.layer.addTo(map);
+                        if (e.layer.getBounds && typeof e.layer.getBounds === 'function') {
+                            const b = e.layer.getBounds();
+                            if (b.isValid()) {
+                                map.fitBounds(b);
+                            }
+                        }
                     }
                 });
                 kmz.load(layer.file_path);
@@ -139,21 +167,12 @@ function syncMapWithTree() {
     });
 
     // Show only selected ones
-    let boundsToFit = null;
     selectedIds.forEach(id => {
         if (id.startsWith('layer_') && loadedLayers[id]) {
             const layer = loadedLayers[id];
             layer.addTo(map);
-            if (layer.getBounds && typeof layer.getBounds === 'function') {
-                boundsToFit = layer.getBounds();
-            }
         }
     });
-
-    // Auto zoom to the last added layer
-    if (boundsToFit && boundsToFit.isValid()) {
-        map.fitBounds(boundsToFit);
-    }
 }
 
 // Upload Form Handler
@@ -186,11 +205,67 @@ document.getElementById('layerForm').addEventListener('submit', async (e) => {
 let pendingGeojson = null;
 let saveModal = null;
 
+// Update Active Layer
+document.getElementById('updateActiveLayerBtn').addEventListener('click', async () => {
+    const activeLayerId = document.getElementById('activeEditLayer').value;
+    if (!activeLayerId) {
+        alert("Please select an Active Edit Layer to update.");
+        return;
+    }
+
+    const fg = map.pm.getGeomanDrawLayers();
+    if (fg.length === 0) {
+        alert("No drawing elements found on the map to save.");
+        return;
+    }
+
+    const layer = rawLayersData[activeLayerId];
+
+    // Combine existing geojson with new shapes
+    let existingGeojson = { type: "FeatureCollection", features: [] };
+    if (layer.geojson_data) {
+        try {
+            existingGeojson = JSON.parse(layer.geojson_data);
+        } catch (e) {
+            console.error("Error parsing existing geojson", e);
+        }
+    }
+
+    const newGeojson = L.featureGroup(fg).toGeoJSON();
+
+    // Merge features
+    if (newGeojson.features && newGeojson.features.length > 0) {
+        existingGeojson.features = existingGeojson.features.concat(newGeojson.features);
+    }
+
+    await fetch(`/layers/${activeLayerId}`, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            name: layer.name,
+            category_id: layer.category_id,
+            geojson_data: JSON.stringify(existingGeojson)
+        })
+    });
+
+    // Clear drawn layers after save
+    fg.forEach(l => map.removeLayer(l));
+
+    // Purge cached layer so it reloads from DB
+    if (loadedLayers['layer_' + activeLayerId]) {
+        map.removeLayer(loadedLayers['layer_' + activeLayerId]);
+        delete loadedLayers['layer_' + activeLayerId];
+    }
+
+    alert("Layer updated successfully!");
+    loadTreeView();
+});
+
 // Show Save Modal
 document.getElementById('saveDrawnLayerBtn').addEventListener('click', () => {
     const fg = map.pm.getGeomanDrawLayers();
     if (fg.length === 0) {
-        alert("No layers drawn to save.");
+        alert("No drawing elements found on the map to save.");
         return;
     }
 
