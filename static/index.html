@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omsk Map System</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Geoman CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" />
+
+    <!-- jsTree CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">Omsk Map System</span>
+        </div>
+    </nav>
+
+    <!-- Save Drawn Layer Modal -->
+    <div class="modal fade" id="saveLayerModal" tabindex="-1" aria-labelledby="saveLayerModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saveLayerModalLabel">Save Drawn Layer</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="saveDrawnLayerForm">
+                        <div class="mb-3">
+                            <label class="form-label">Layer Name</label>
+                            <input type="text" class="form-control" id="drawnLayerName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select category-select" id="drawnLayerCategory"></select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmSaveDrawnLayer">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row h-100 mt-2">
+            <!-- Sidebar for Categories & Layers -->
+            <div class="col-md-3">
+                <div class="card mb-3">
+                    <div class="card-header">Categories & Layers</div>
+                    <div class="card-body">
+                        <div id="jstree_div"></div>
+                        <hr>
+
+                        <h5>Create Category</h5>
+                        <form id="categoryForm" class="mb-3">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="newCategoryName" placeholder="Category Name" required>
+                                <button class="btn btn-outline-secondary" type="submit">Add</button>
+                            </div>
+                        </form>
+
+                        <hr>
+                        <h5>Add New Layer</h5>
+                        <form id="layerForm">
+                            <div class="mb-3">
+                                <label class="form-label">Layer Name</label>
+                                <input type="text" class="form-control" id="layerName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select category-select" id="layerCategory"></select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Upload KMZ</label>
+                                <input class="form-control" type="file" id="kmzFile" accept=".kmz">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Upload Layer</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Map Container -->
+            <div class="col-md-9">
+                <div id="map"></div>
+                <div class="mt-2">
+                    <button id="saveDrawnLayerBtn" class="btn btn-success">Save Drawn Layer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery (required for jsTree) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Geoman JS -->
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
+    <!-- jszip JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- leaflet-kmz JS -->
+    <script src="https://unpkg.com/leaflet-kmz@latest/dist/leaflet-kmz.js"></script>
+    <!-- jsTree JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+
+    <!-- Custom App Logic -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
