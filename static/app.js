@@ -102,21 +102,23 @@ async function loadTreeView() {
         // Auto-load layers if not already loaded
         if (!loadedLayers[nodeId]) {
             if (layer.is_kmz && layer.file_path) {
-                // Leaflet-KMZ logic with wrapper group for multi-folder support
-                const wrapperGroup = L.featureGroup();
-                loadedLayers[nodeId] = wrapperGroup;
-
-                let kmz = L.kmzLayer().addTo(wrapperGroup);
+                // Leaflet-KMZ logic directly passing parsed e.layer
+                let kmz = L.kmzLayer();
                 kmz.on('load', function(e) {
+                    loadedLayers[nodeId] = e.layer;
                     const tree = $('#jstree_div').jstree(true);
                     if (tree && tree.is_selected(nodeId)) {
-                        map.addLayer(wrapperGroup);
+                        map.addLayer(e.layer);
                         setTimeout(() => {
-                            if (wrapperGroup.getBounds && typeof wrapperGroup.getBounds === 'function') {
-                                const b = wrapperGroup.getBounds();
-                                if (b.isValid()) {
-                                    map.fitBounds(b, { maxZoom: 14 });
+                            try {
+                                if (e.layer.getBounds && typeof e.layer.getBounds === 'function') {
+                                    const b = e.layer.getBounds();
+                                    if (b.isValid()) {
+                                        map.fitBounds(b, { maxZoom: 14 });
+                                    }
                                 }
+                            } catch (err) {
+                                console.warn("Could not determine bounds for KMZ", err);
                             }
                         }, 100);
                     }
