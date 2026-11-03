@@ -104,6 +104,9 @@ async function loadTreeView() {
             if (layer.is_kmz && layer.file_path) {
                 // Leaflet-KMZ logic directly passing parsed e.layer
                 let kmz = L.kmzLayer();
+                kmz.on('error', function(e) {
+                    console.error('KMZ Load Error for layer ' + layer.name, e);
+                });
                 kmz.on('load', function(e) {
                     loadedLayers[nodeId] = e.layer;
                     const tree = $('#jstree_div').jstree(true);
