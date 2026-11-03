@@ -139,11 +139,21 @@ function syncMapWithTree() {
     });
 
     // Show only selected ones
+    let boundsToFit = null;
     selectedIds.forEach(id => {
         if (id.startsWith('layer_') && loadedLayers[id]) {
-            loadedLayers[id].addTo(map);
+            const layer = loadedLayers[id];
+            layer.addTo(map);
+            if (layer.getBounds && typeof layer.getBounds === 'function') {
+                boundsToFit = layer.getBounds();
+            }
         }
     });
+
+    // Auto zoom to the last added layer
+    if (boundsToFit && boundsToFit.isValid()) {
+        map.fitBounds(boundsToFit);
+    }
 }
 
 // Upload Form Handler
