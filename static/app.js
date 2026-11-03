@@ -15,13 +15,6 @@ map.pm.addControls({
 
 let loadedLayers = {}; // Store layer instances for toggling visibility
 
-// Initialize KMZ layer parser
-const kmzParser = new L.KMZParser({
-    onKMZLoaded: function (layer, name) {
-        // Will be managed per layer manually
-    }
-});
-
 // Helper for XSS sanitization
 function sanitizeHTML(str) {
     const temp = document.createElement('div');
@@ -87,27 +80,25 @@ async function loadTreeView() {
         // Auto-load layers if not already loaded
         if (!loadedLayers[nodeId]) {
             if (layer.is_kmz && layer.file_path) {
-                fetch(layer.file_path)
-                    .then(res => res.blob())
-                    .then(blob => {
-                        let file = new File([blob], layer.file_path.split('/').pop());
-                        let p = new L.KMZParser({
-                            onKMZLoaded: function (l, name) {
-                                loadedLayers[nodeId] = l;
-                                l.addTo(map);
-                            }
-                        });
-                        p.load(file);
-                    });
+                // Leaflet-KMZ logic
+                let kmz = L.kmzLayer().on('load', function(e) {
+                    loadedLayers[nodeId] = e.layer;
+                    // Only add to map if tree node is selected
+                    const tree = $('#jstree_div').jstree(true);
+                    if (tree && tree.is_selected(nodeId)) {
+                        e.layer.addTo(map);
+                    }
+                });
+                kmz.load(layer.file_path);
             } else if (layer.geojson_data) {
-                let geoLayer = L.geoJSON(JSON.parse(layer.geojson_data)).addTo(map);
+                let geoLayer = L.geoJSON(JSON.parse(layer.geojson_data));
                 loadedLayers[nodeId] = geoLayer;
+                // Since this is sync, add immediately for default checked state
+                geoLayer.addTo(map);
             }
         } else {
-            // Already loaded, just ensure it's on map
-            if (!map.hasLayer(loadedLayers[nodeId])) {
-                loadedLayers[nodeId].addTo(map);
-            }
+            // Already loaded, just ensure it's on map if selected
+            // But we actually defer this to the jstree 'ready' or 'changed' event to avoid race conditions
         }
     });
 
@@ -118,27 +109,40 @@ async function loadTreeView() {
         },
         "checkbox": {
             "keep_selected_style": false,
-            "three_state": true
+            "three_state": true,
+            "cascade": "up+down"
         },
         "plugins": ["checkbox"]
     });
 
+    // Sync map when tree finishes loading
+    $('#jstree_div').on("ready.jstree", function () {
+        syncMapWithTree();
+    });
+
     $('#jstree_div').on("changed.jstree", function (e, data) {
-        const selectedIds = data.selected;
+        syncMapWithTree();
+    });
+}
 
-        // Hide all layers first
-        Object.keys(loadedLayers).forEach(key => {
-            if (map.hasLayer(loadedLayers[key])) {
-                map.removeLayer(loadedLayers[key]);
-            }
-        });
+function syncMapWithTree() {
+    const tree = $('#jstree_div').jstree(true);
+    if (!tree) return;
 
-        // Show only selected ones
-        selectedIds.forEach(id => {
-            if (id.startsWith('layer_') && loadedLayers[id]) {
-                loadedLayers[id].addTo(map);
-            }
-        });
+    const selectedIds = tree.get_selected();
+
+    // Hide all layers first
+    Object.keys(loadedLayers).forEach(key => {
+        if (map.hasLayer(loadedLayers[key])) {
+            map.removeLayer(loadedLayers[key]);
+        }
+    });
+
+    // Show only selected ones
+    selectedIds.forEach(id => {
+        if (id.startsWith('layer_') && loadedLayers[id]) {
+            loadedLayers[id].addTo(map);
+        }
     });
 }
 

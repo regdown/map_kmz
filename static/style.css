@@ -2,16 +2,28 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
 }
 
 #map {
     height: 80vh; /* Adjust height as needed */
     width: 100%;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 .card-body {
-    max-height: 80vh;
+    max-height: 85vh;
     overflow-y: auto;
+}
+
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
