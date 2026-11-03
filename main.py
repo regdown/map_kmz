@@ -11,6 +11,34 @@ import uuid
 
 app = FastAPI()
 
+@app.on_event("startup")
+def startup_event():
+    db = SessionLocal()
+    # Check if empty
+    if db.query(Category).count() == 0:
+        cat = Category(name="Демонстрация")
+        db.add(cat)
+        db.commit()
+        db.refresh(cat)
+
+        # Add the default kmz if exists
+        kmz_path = "demo/Тепловые_сети.kmz"
+        if os.path.exists(kmz_path):
+            # copy it to static uploads
+            unique_filename = f"{uuid.uuid4()}.kmz"
+            dest_path = f"static/uploads/{unique_filename}"
+            shutil.copyfile(kmz_path, dest_path)
+
+            layer = Layer(
+                name="Тепловые сети",
+                category_id=cat.id,
+                is_kmz=True,
+                file_path=f"/{dest_path}"
+            )
+            db.add(layer)
+            db.commit()
+    db.close()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

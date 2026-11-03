@@ -4,6 +4,7 @@ A professional, cross-browser web application for visualizing and managing map l
 
 ## Features
 - **Interactive Map:** Centered on Omsk by default, using free OpenStreetMap tiles.
+- **Demo Data:** Preloaded with `demo/Тепловые_сети.kmz` to demonstrate layer rendering on startup.
 - **Layer Management:** Supports categorizing layers in a tree structure.
 - **KMZ Support:** Upload and visualize KMZ files directly.
 - **Professional Drawing:** Draw geometries directly on the map and save them to the database.

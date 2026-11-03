@@ -108,13 +108,15 @@ async function loadTreeView() {
                     // Only add to map if tree node is selected
                     const tree = $('#jstree_div').jstree(true);
                     if (tree && tree.is_selected(nodeId)) {
-                        e.layer.addTo(map);
-                        if (e.layer.getBounds && typeof e.layer.getBounds === 'function') {
-                            const b = e.layer.getBounds();
-                            if (b.isValid()) {
-                                map.fitBounds(b);
+                        map.addLayer(e.layer);
+                        setTimeout(() => {
+                            if (e.layer.getBounds && typeof e.layer.getBounds === 'function') {
+                                const b = e.layer.getBounds();
+                                if (b.isValid()) {
+                                    map.fitBounds(b, { maxZoom: 14 });
+                                }
                             }
-                        }
+                        }, 100);
                     }
                 });
                 kmz.load(layer.file_path);
@@ -122,7 +124,14 @@ async function loadTreeView() {
                 let geoLayer = L.geoJSON(JSON.parse(layer.geojson_data));
                 loadedLayers[nodeId] = geoLayer;
                 // Since this is sync, add immediately for default checked state
-                geoLayer.addTo(map);
+                map.addLayer(geoLayer);
+
+                if (geoLayer.getBounds && typeof geoLayer.getBounds === 'function') {
+                    const b = geoLayer.getBounds();
+                    if (b.isValid()) {
+                        map.fitBounds(b, { maxZoom: 14 });
+                    }
+                }
             }
         } else {
             // Already loaded, just ensure it's on map if selected
@@ -170,7 +179,7 @@ function syncMapWithTree() {
     selectedIds.forEach(id => {
         if (id.startsWith('layer_') && loadedLayers[id]) {
             const layer = loadedLayers[id];
-            layer.addTo(map);
+            map.addLayer(layer);
         }
     });
 }
